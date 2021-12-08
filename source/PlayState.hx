@@ -12,28 +12,26 @@ class PlayState extends FlxState
 {
 	var serverStartedText:FlxText;
 	var playerJoined:FlxText;
-	var players:FlxTypedGroup<FlxSprite>;
+	var players:Array<Array<Int>>;
 	var newestID:Int;
 
 	override public function create()
 	{
 		playerJoined = new FlxText(0, 30, 500, "History:\n");
-		players = new FlxTypedGroup<FlxSprite>();
 		newestID = 0;
 		var server = Network.registerSession(NetworkMode.SERVER, {ip: "0.0.0.0", port: 8888, flash_policy_file_port: 9999});
 		server.addEventListener(NetworkEvent.CONNECTED, function(event:NetworkEvent)
 		{
 			playerJoined.text += "Player joined!\n";
-			players.add(new FlxSprite());
+			players.push([0, 0]);
 		});
 		server.addEventListener(NetworkEvent.MESSAGE_RECEIVED, function(event:NetworkEvent)
 		{
 			switch (event.data.case1)
 			{
 				case "player_joined":
-					var previousPlayers = players.members.slice(0, players.members.length - 1);
-					trace("Previous players: " + previousPlayers);
-					server.send({case1: "new_player", players1: previousPlayers, playerID: newestID});
+					players[-1] = [event.data.location_x, event.data.location_y];
+					server.send({case1: "new_player", players: players, playerID: newestID});
 					trace("Sended");
 					newestID++;
 			}
